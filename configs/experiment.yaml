@@ -1,0 +1,59 @@
+project: petfinder_adoption_prediction
+seed: 42
+
+paths:
+  data_dir: Data
+  outputs_dir: outputs
+  checkpoint_dir: outputs/checkpoints
+  feature_dir: outputs/features
+
+target:
+  name: AdoptionSpeed
+  num_classes: 5
+  metric: quadratic_weighted_kappa
+
+splits:
+  validation_size: 0.2
+  n_splits: 5
+  random_state: 42
+
+tabular:
+  model_family: xgboost_lightgbm
+  avoid_raw_text_encoding: true
+  notes:
+    - Fit preprocessors inside each fold only.
+    - Treat Description and Name as text inputs, not ordinal tabular IDs.
+
+image:
+  backbone: resnet50
+  image_size: 224
+  images_per_pet_initial: 1
+  batch_size: 64
+  embedding_dim: 2048
+  freeze_backbone_initially: true
+  sample_size_initial: 1024
+
+text:
+  model_name: bert-base-multilingual-cased
+  max_length: 160
+  batch_size: 16
+  embedding_dim: 768
+  baseline:
+    model: tfidf_linear_svm
+    max_features: 50000
+    ngram_range: [1, 2]
+
+fusion:
+  architectures:
+    - early
+    - late
+    - intermediate_attention
+  learning_rate: 0.001
+  epochs: 50
+  patience: 10
+  batch_size: 128
+  lightweight_baseline:
+    text_components: 64
+    max_text_features: 50000
+    sample_size_initial: 1200
+    epochs_initial: 6
